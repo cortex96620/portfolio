@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prasande Peroumal — Administrateur Systèmes & Réseaux</title>
+<style>
+:root{
+  --bg:#0a0e14;
+  --bg-raised:#0f1620;
+  --ink:#e8edf2;
+  --ink-dim:#8a97a8;
+  --line:#1c2733;
+  --signal:#3ddc97;
+  --signal-dim:#1f5c45;
+  --alert:#ff6b5e;
+  --mono:'JetBrains Mono','SF Mono',Consolas,monospace;
+  --sans:'Inter',-apple-system,'Segoe UI',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--sans);
+  overflow-x:hidden;
+  line-height:1.5;
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important;}
+}
+
+/* ---------- boot screen ---------- */
+#boot{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  font-family:var(--mono);color:var(--signal);
+  transition:opacity .6s ease, visibility .6s ease;
+}
+#boot.hide{opacity:0;visibility:hidden;pointer-events:none;}
+#bootLine{font-size:14px;letter-spacing:0.5px;white-space:pre;min-height:20px;}
+#bootBar{width:280px;height:2px;background:var(--line);margin-top:18px;position:relative;overflow:hidden;}
+#bootBar::after{
+  content:'';position:absolute;left:0;top:0;height:100%;width:0%;
+  background:var(--signal);animation:bootfill 1.7s ease forwards;
+}
+@keyframes bootfill{to{width:100%;}}
+.cursor{display:inline-block;width:7px;height:14px;background:var(--signal);margin-left:2px;animation:blink 1s steps(1) infinite;vertical-align:middle;}
+@keyframes blink{50%{opacity:0;}}
+
+/* ---------- network canvas bg ---------- */
+#netbg{position:fixed;inset:0;z-index:0;opacity:0.5;}
+
+/* ---------- layout ---------- */
+.wrap{position:relative;z-index:1;}
+header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 6vw;
+  background:rgba(10,14,20,0.75);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.logo{font-family:var(--mono);font-size:15px;color:var(--signal);letter-spacing:1px;display:flex;align-items:center;gap:8px;}
+.logo .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal);animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+nav{display:flex;gap:28px;}
+nav a{color:var(--ink-dim);text-decoration:none;font-size:13.5px;font-family:var(--mono);transition:color .2s;position:relative;}
+nav a:hover{color:var(--ink);}
+nav a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--signal);transition:width .25s;}
+nav a:hover::after{width:100%;}
+@media(max-width:840px){nav{display:none;}}
+
+section{padding:120px 6vw;max-width:1180px;margin:0 auto;position:relative;}
+.tag{font-family:var(--mono);font-size:12.5px;color:var(--signal);display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.tag::before{content:'';width:20px;height:1px;background:var(--signal);}
+h2{font-size:clamp(28px,4vw,42px);font-weight:600;letter-spacing:-0.5px;margin-bottom:36px;}
+
+/* ---------- hero ---------- */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding-top:80px;}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:60px;align-items:center;}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr;}}
+.hero-eyebrow{font-family:var(--mono);color:var(--signal-dim);font-size:13px;margin-bottom:18px;}
+.hero-eyebrow span{color:var(--signal);}
+h1{font-size:clamp(36px,6vw,64px);font-weight:700;line-height:1.05;letter-spacing:-1.5px;}
+h1 .accent{color:var(--signal);}
+#typed{font-family:var(--mono);font-size:clamp(16px,2vw,20px);color:var(--ink-dim);margin-top:20px;min-height:28px;}
+.hero-desc{margin-top:22px;color:var(--ink-dim);font-size:16px;max-width:52ch;}
+.hero-actions{display:flex;gap:14px;margin-top:36px;flex-wrap:wrap;}
+.btn{
+  font-family:var(--mono);font-size:13.5px;padding:13px 24px;text-decoration:none;
+  border:1px solid var(--line);color:var(--ink);border-radius:2px;
+  transition:border-color .25s, transform .2s, background .25s;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn.primary{background:var(--signal);color:#06110c;border-color:var(--signal);font-weight:600;}
+.btn.primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px -8px rgba(61,220,151,0.5);}
+.btn:not(.primary):hover{border-color:var(--signal);color:var(--signal);}
+.stackline{display:flex;gap:10px;flex-wrap:wrap;margin-top:44px;}
+.chip{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);border:1px solid var(--line);padding:6px 12px;border-radius:2px;}
+
+/* topology visual */
+.topo{position:relative;height:380px;}
+.topo svg{width:100%;height:100%;}
+.node-label{font-family:var(--mono);font-size:10px;fill:var(--ink-dim);}
+.topo-line{stroke:var(--signal-dim);stroke-width:1;fill:none;}
+.packet{fill:var(--signal);filter:drop-shadow(0 0 4px var(--signal));}
+
+/* ---------- reveal ---------- */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease, transform .7s ease;}
+.reveal.in{opacity:1;transform:translateY(0);}
+
+/* ---------- about / stats ---------- */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;}
+@media(max-width:840px){.about-grid{grid-template-columns:1fr;}}
+.about-text p{color:var(--ink-dim);font-size:15.5px;margin-bottom:16px;max-width:56ch;}
+.about-text strong{color:var(--ink);font-weight:600;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:8px;}
+.stat{background:var(--bg-raised);padding:26px 18px;text-align:center;}
+.stat b{display:block;font-size:30px;font-family:var(--mono);color:var(--signal);}
+.stat span{font-size:12px;color:var(--ink-dim);}
+.skillbars{margin-top:10px;}
+.skillrow{margin-bottom:16px;}
+.skillrow .lbl{display:flex;justify-content:space-between;font-size:13px;font-family:var(--mono);color:var(--ink-dim);margin-bottom:6px;}
+.skillrow .track{height:4px;background:var(--line);border-radius:2px;overflow:hidden;}
+.skillrow .fill{height:100%;background:var(--signal);width:0%;border-radius:2px;transition:width 1.1s cubic-bezier(.2,.8,.2,1);}
+
+/* ---------- timeline ---------- */
+.timeline{position:relative;padding-left:32px;border-left:1px solid var(--line);}
+.trow{position:relative;padding-bottom:36px;}
+.trow:last-child{padding-bottom:0;}
+.trow::before{
+  content:'';position:absolute;left:-38px;top:4px;width:9px;height:9px;border-radius:50%;
+  background:var(--bg);border:2px solid var(--signal-dim);transition:border-color .3s, box-shadow .3s;
+}
+.trow.in::before{border-color:var(--signal);box-shadow:0 0 10px var(--signal);}
+.trow .yr{font-family:var(--mono);color:var(--signal);font-size:13px;}
+.trow h4{font-size:17px;margin:4px 0 2px;font-weight:600;}
+.trow p{color:var(--ink-dim);font-size:14px;}
+
+/* ---------- stage ---------- */
+.stage-card{
+  border:1px solid var(--line);background:var(--bg-raised);padding:36px;border-radius:3px;
+}
+.stage-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:20px;}
+.stage-head h3{font-size:20px;}
+.stage-head .meta{font-family:var(--mono);font-size:12.5px;color:var(--signal);}
+.missions{list-style:none;margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;}
+@media(max-width:700px){.missions{grid-template-columns:1fr;}}
+.missions li{font-size:14px;color:var(--ink-dim);padding-left:18px;position:relative;}
+.missions li::before{content:'▹';position:absolute;left:0;color:var(--signal);}
+.tools-line{margin-top:22px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);}
+.tools-line b{color:var(--ink);}
+
+/* ---------- projects ---------- */
+.proj{
+  border:1px solid var(--line);margin-bottom:16px;border-radius:3px;overflow:hidden;background:var(--bg-raised);
+}
+.proj-head{
+  display:flex;align-items:center;justify-content:space-between;padding:22px 26px;cursor:pointer;gap:16px;
+}
+.proj-head:hover{background:rgba(61,220,151,0.04);}
+.proj-id{font-family:var(--mono);color:var(--signal-dim);font-size:12px;margin-right:14px;}
+.proj-title{font-size:17px;font-weight:600;}
+.proj-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.proj-tags span{font-family:var(--mono);font-size:10.5px;color:var(--ink-dim);border:1px solid var(--line);padding:3px 9px;border-radius:2px;}
+.chev{font-family:var(--mono);color:var(--signal);transition:transform .3s;flex-shrink:0;}
+.proj.open .chev{transform:rotate(180deg);}
+.proj-body{max-height:0;overflow:hidden;transition:max-height .45s ease;}
+.proj-body-inner{padding:0 26px 30px;color:var(--ink-dim);font-size:14.5px;}
+.proj-body-inner h5{color:var(--ink);font-size:12.5px;font-family:var(--mono);margin:18px 0 10px;text-transform:none;}
+.proj-body-inner ol,.proj-body-inner ul{padding-left:20px;margin-bottom:4px;}
+.proj-body-inner li{margin-bottom:6px;}
+.proj-body-inner .comp{display:flex;flex-wrap:wrap;gap:8px;}
+.proj-body-inner .comp span{font-family:var(--mono);font-size:11px;background:var(--bg);border:1px solid var(--line);padding:4px 10px;border-radius:2px;}
+.doclink{display:inline-flex;align-items:center;gap:6px;margin-top:18px;color:var(--signal);text-decoration:none;font-family:var(--mono);font-size:13px;}
+.doclink:hover{text-decoration:underline;}
+
+/* ---------- veille ---------- */
+.threat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:20px;}
+@media(max-width:840px){.threat-grid{grid-template-columns:1fr;}}
+.threat{border:1px solid var(--line);background:var(--bg-raised);padding:22px;border-radius:3px;position:relative;overflow:hidden;}
+.threat::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--alert);opacity:.7;}
+.threat h5{font-size:14.5px;margin-bottom:8px;}
+.threat p{font-size:13px;color:var(--ink-dim);}
+.tool-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+.tool-row span{font-family:var(--mono);font-size:12px;color:var(--ink-dim);border:1px solid var(--line);padding:6px 12px;border-radius:2px;}
+.src-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+.src-row a{font-family:var(--mono);font-size:12px;color:var(--signal);text-decoration:none;border:1px solid var(--signal-dim);padding:6px 12px;border-radius:2px;transition:background .2s;}
+.src-row a:hover{background:rgba(61,220,151,0.08);}
+
+/* ---------- contact ---------- */
+#contact{text-align:center;}
+#contact h2{margin-bottom:14px;}
+#contact p{color:var(--ink-dim);margin-bottom:36px;}
+.contact-links{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
+footer{text-align:center;padding:30px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div id="bootLine">initializing profile<span class="cursor"></span></div>
+  <div id="bootBar"></div>
+</div>
+
+<canvas id="netbg"></canvas>
+
+<div class="wrap">
+<header>
+  <div class="logo"><span class="dot"></span>PRASANDE.SYS</div>
+  <nav>
+    <a href="#about">Profil</a>
+    <a href="#formation">Formation</a>
+    <a href="#stage">Stage</a>
+    <a href="#projets">Projets</a>
+    <a href="#veille">Veille</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<section id="hero">
+  <div class="hero-grid">
+    <div>
+      <div class="hero-eyebrow">bachelor administrateur d'infrastructures sécurisées <span>— cfa insta paris</span></div>
+      <h1>Prasande Peroumal<br><span class="accent">Admin Sys & Réseaux</span></h1>
+      <div id="typed"></div>
+      <p class="hero-desc">Titulaire d'un BTS SIO option SISR, en recherche d'alternance pour mon Bachelor à partir de septembre 2026. Spécialisé en administration réseau, sécurisation d'infrastructures et cybersécurité.</p>
+      <div class="hero-actions">
+        <a class="btn primary" href="images/cv_prasande_peroumal.pdf">↓ Télécharger le CV</a>
+        <a class="btn" href="#projets">Voir les projets</a>
+        <a class="btn" href="https://www.linkedin.com/in/prasande-peroumal" target="_blank">↗ LinkedIn</a>
+      </div>
+      <div class="stackline">
+        <span class="chip">Windows Server</span><span class="chip">Active Directory</span>
+        <span class="chip">VLAN / DMZ</span><span class="chip">Linux</span>
+        <span class="chip">Cybersécurité</span><span class="chip">Cisco</span>
+        <span class="chip">PfSense</span><span class="chip">GLPI</span>
+      </div>
+    </div>
+    <div class="topo">
+      <svg viewBox="0 0 340 380" id="topoSvg">
+        <line class="topo-line" x1="170" y1="60" x2="70" y2="180"/>
+        <line class="topo-line" x1="170" y1="60" x2="270" y2="180"/>
+        <line class="topo-line" x1="170" y1="60" x2="170" y2="320"/>
+        <line class="topo-line" x1="70" y1="180" x2="70" y2="300"/>
+        <line class="topo-line" x1="270" y1="180" x2="270" y2="300"/>
+        <line class="topo-line" x1="70" y1="180" x2="270" y2="180"/>
+        <circle cx="170" cy="60" r="7" fill="#0a0e14" stroke="#3ddc97" stroke-width="2"/>
+        <text class="node-label" x="182" y="55">SRVBIO — AD/DNS/DHCP</text>
+        <circle cx="70" cy="180" r="6" fill="#0a0e14" stroke="#3ddc97" stroke-width="2"/>
+        <text class="node-label" x="10" y="165">GLPI</text>
+        <circle cx="270" cy="180" r="6" fill="#0a0e14" stroke="#3ddc97" stroke-width="2"/>
+        <text class="node-label" x="240" y="165">ZABBIX</text>
+        <circle cx="170" cy="320" r="6" fill="#0a0e14" stroke="#1f5c45" stroke-width="2"/>
+        <text class="node-label" x="130" y="340">FIREWALL</text>
+        <circle cx="70" cy="300" r="5" fill="#0a0e14" stroke="#1f5c45" stroke-width="2"/>
+        <text class="node-label" x="8" y="318">OU_VENTES</text>
+        <circle cx="270" cy="300" r="5" fill="#0a0e14" stroke="#1f5c45" stroke-width="2"/>
+        <text class="node-label" x="225" y="318">OU_TECH</text>
+        <circle class="packet" r="3"><animateMotion dur="3.2s" repeatCount="indefinite" path="M170,60 L70,180"/></circle>
+        <circle class="packet" r="3"><animateMotion dur="2.6s" repeatCount="indefinite" begin="0.6s" path="M170,60 L270,180"/></circle>
+        <circle class="packet" r="3"><animateMotion dur="4s" repeatCount="indefinite" begin="1.2s" path="M170,60 L170,320"/></circle>
+        <circle class="packet" r="3"><animateMotion dur="2.2s" repeatCount="indefinite" begin="0.3s" path="M70,180 L270,180"/></circle>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="tag">01 — profil</div>
+  <h2 class="reveal">Qui suis-je ?</h2>
+  <div class="about-grid">
+    <div class="about-text reveal">
+      <p>Avant l'informatique, j'étudiais la biologie à la Sorbonne. J'ai choisi de me réorienter vers quelque chose de plus concret et technique. Après un <strong>BTS SIO option SISR</strong> au CFA INSTA Paris, je poursuis désormais en <strong>Bachelor Administrateur d'Infrastructures Sécurisées</strong>, en alternance à partir de septembre 2026 — déploiement de serveurs, configuration VLAN, administration Active Directory.</p>
+      <p>Mon objectif : devenir <strong>Administrateur Systèmes & Réseaux</strong>.</p>
+      <div class="stats">
+        <div class="stat"><b>3 ans</b><span>BTS SIO + Bachelor</span></div>
+        <div class="stat"><b>5</b><span>Projets réalisés</span></div>
+        <div class="stat"><b>SISR</b><span>Spécialité choisie</span></div>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="skillbars" id="skillbars">
+        <div class="skillrow" data-pct="80"><div class="lbl"><span>Windows Server 2022</span><span>80%</span></div><div class="track"><div class="fill"></div></div></div>
+        <div class="skillrow" data-pct="75"><div class="lbl"><span>Active Directory / GPO</span><span>75%</span></div><div class="track"><div class="fill"></div></div></div>
+        <div class="skillrow" data-pct="65"><div class="lbl"><span>Linux (Ubuntu / Debian)</span><span>65%</span></div><div class="track"><div class="fill"></div></div></div>
+        <div class="skillrow" data-pct="55"><div class="lbl"><span>PfSense / Firewall</span><span>55%</span></div><div class="track"><div class="fill"></div></div></div>
+        <div class="skillrow" data-pct="55"><div class="lbl"><span>GLPI</span><span>55%</span></div><div class="track"><div class="fill"></div></div></div>
+        <div class="skillrow" data-pct="55"><div class="lbl"><span>PowerShell</span><span>55%</span></div><div class="track"><div class="fill"></div></div></div>
+        <div class="skillrow" data-pct="50"><div class="lbl"><span>VLAN / Routage inter-VLAN</span><span>50%</span></div><div class="track"><div class="fill"></div></div></div>
+        <div class="skillrow" data-pct="30"><div class="lbl"><span>Cisco Packet Tracer</span><span>30%</span></div><div class="track"><div class="fill"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="formation">
+  <div class="tag">02 — formation</div>
+  <h2 class="reveal">Parcours scolaire</h2>
+  <div class="timeline" id="timeline">
+    <div class="trow reveal"><div class="yr">2026</div><h4>Bachelor Administrateur d'Infrastructures Sécurisées</h4><p>CFA INSTA Paris — à partir de septembre 2026</p></div>
+    <div class="trow reveal"><div class="yr">2025</div><h4>BTS SIO – SISR</h4><p>CFA INSTA Paris</p></div>
+    <div class="trow reveal"><div class="yr">2024</div><h4>Licence Informatique L1</h4><p>Sorbonne Université</p></div>
+    <div class="trow reveal"><div class="yr">2018</div><h4>Baccalauréat STI2D</h4><p></p></div>
+  </div>
+</section>
+
+<section id="stage">
+  <div class="tag">03 — expérience</div>
+  <h2 class="reveal">Stage — Technicien Support N1</h2>
+  <div class="stage-card reveal">
+    <div class="stage-head">
+      <div>
+        <h3>Europ Assistance, Saint-Denis</h3>
+        <p style="color:var(--ink-dim);font-size:13.5px;margin-top:4px;">Assistance utilisateurs niveau 1, traitement des incidents, installation de postes.</p>
+      </div>
+      <div class="meta">FÉV 2026 → MAI 2026 · 14 SEM.</div>
+    </div>
+    <ul class="missions">
+      <li>Inventaire et gestion du parc informatique (GLPI)</li>
+      <li>Installation de postes Windows 10/11</li>
+      <li>Création de comptes via Active Directory</li>
+      <li>Gestion des droits NTFS sur dossiers partagés</li>
+      <li>Traitement de tickets helpdesk niveau 1</li>
+      <li>Dépannage réseau (ping, ipconfig, tracert)</li>
+      <li>Câblage réseau, switches Cisco/HP Aruba</li>
+    </ul>
+    <div class="tools-line">Outils : <b>GLPI · Windows Server 2019 · Active Directory · CMD</b></div>
+  </div>
+</section>
+
+<section id="projets">
+  <div class="tag">04 — réalisations</div>
+  <h2 class="reveal">Projets techniques</h2>
+
+  <div class="proj reveal">
+    <div class="proj-head" onclick="toggleProj(this)">
+      <div><span class="proj-id">PROJ_01</span><span class="proj-title">Infrastructure Windows Server — AD, DNS, DHCP</span>
+        <div class="proj-tags"><span>Windows Server 2022</span><span>Active Directory</span><span>DHCP</span></div>
+      </div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="proj-body"><div class="proj-body-inner">
+      <p>L'entreprise fictive BioVision (recherche biomédicale) souhaite centraliser ses comptes utilisateurs et automatiser l'attribution des adresses IP. Ma mission : déployer une infrastructure Windows Server avec AD, DNS et DHCP.</p>
+      <h5>OBJECTIFS</h5>
+      <ol>
+        <li>Déployer Windows Server 2022 Standard Evaluation avec IP statique (172.16.140.20)</li>
+        <li>Créer le domaine Active Directory Biovision.com</li>
+        <li>Mettre en place DNS + DHCP sur SrvBio</li>
+        <li>Structurer les OUs par département (Rech&Dev, Commercial, Stagiaires, Utilisateurs, Visiteurs, Wifi)</li>
+      </ol>
+      <h5>TRAVAIL RÉALISÉ</h5>
+      <ul>
+        <li>Analyse du besoin → déploiement → tests → documentation technique</li>
+        <li>Installation WS2022 + promotion contrôleur de domaine (SrvBio.Biovision.com)</li>
+        <li>Création des OUs, comptes utilisateurs et groupes de sécurité (G_Admin, G_Utilisateur)</li>
+      </ul>
+      <h5>COMPÉTENCES</h5>
+      <div class="comp"><span>A1.3.1 — Installation serveur</span><span>A1.3.4 — Annuaire AD</span><span>A1.3.5 — Service DHCP</span><span>A4.1.3 — Tests et validation</span></div>
+      <a class="doclink" href="docs/Documentation_ActiveDirectory_Biovision.pdf" target="_blank">↗ Documentation</a>
+    </div></div>
+  </div>
+
+  <div class="proj reveal">
+    <div class="proj-head" onclick="toggleProj(this)">
+      <div><span class="proj-id">PROJ_02</span><span class="proj-title">Installation de GLPI sur Debian Linux 12</span>
+        <div class="proj-tags"><span>GLPI</span><span>Debian Linux</span><span>MariaDB</span><span>Apache</span></div>
+      </div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="proj-body"><div class="proj-body-inner">
+      <p>L'entreprise fictive Biovision souhaite mettre en place un outil de gestion du parc informatique et du helpdesk. Ma mission : installer et configurer GLPI sur une VM Debian 12 avec synchronisation LDAP vers le domaine Biovision.com.</p>
+      <h5>OBJECTIFS</h5>
+      <ol>
+        <li>Configurer la machine Debian avec IP statique (172.16.140.30)</li>
+        <li>Installer Apache2, PHP et MariaDB</li>
+        <li>Créer la base de données GLPI et configurer les répertoires</li>
+        <li>Configurer le VirtualHost Apache pour Biovision.com</li>
+        <li>Finaliser l'installation via l'interface web GLPI</li>
+      </ol>
+      <h5>TRAVAIL RÉALISÉ</h5>
+      <ul>
+        <li>Installation Apache2 + PHP + MariaDB + paquets PHP (ldap, curl, gd...)</li>
+        <li>Création BDD glpi_admin, déploiement GLPI 10.0.10, configuration VirtualHost biovision.com</li>
+        <li>Installation complète via l'assistant web GLPI (6 étapes)</li>
+        <li>Configuration des notifications par mail via SMTP / Postfix — test de création et suivi de ticket d'incident</li>
+      </ul>
+      <h5>COMPÉTENCES</h5>
+      <div class="comp"><span>A1.3.1 — Installation serveur</span><span>A1.3.2 — Configuration réseau</span><span>A1.4.1 — Base de données</span><span>A4.1.3 — Tests et validation</span></div>
+      <a class="doclink" href="docs/Documentation_GLPI_Biovision.pdf" target="_blank">↗ Documentation</a>
+    </div></div>
+  </div>
+
+  <div class="proj reveal">
+    <div class="proj-head" onclick="toggleProj(this)">
+      <div><span class="proj-id">PROJ_03</span><span class="proj-title">Création d'une GPO — Limite de caractères mot de passe</span>
+        <div class="proj-tags"><span>Windows Server 2022</span><span>GPO</span><span>Sécurité</span></div>
+      </div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="proj-body"><div class="proj-body-inner">
+      <p>Afin de renforcer la sécurité des comptes du domaine Biovision.com, une stratégie de groupe (GPO) est mise en place pour imposer une politique de mot de passe robuste sur tous les utilisateurs.</p>
+      <h5>OBJECTIFS</h5>
+      <ol>
+        <li>Ouvrir la console GPMC via la commande gpmc</li>
+        <li>Accéder à la Default Domain Policy et modifier la stratégie de mot de passe</li>
+        <li>Configurer la longueur minimale et les exigences de complexité</li>
+      </ol>
+      <h5>TRAVAIL RÉALISÉ</h5>
+      <ul>
+        <li>Configuration de la stratégie de mot de passe : longueur minimale 12 caractères, complexité activée</li>
+        <li>Application via la Default Domain Policy sur l'ensemble du domaine Biovision.com</li>
+      </ul>
+      <h5>COMPÉTENCES</h5>
+      <div class="comp"><span>A1.3.4 — Annuaire AD</span><span>A1.3.6 — Stratégie de groupe</span><span>A4.1.3 — Tests et validation</span></div>
+      <a class="doclink" href="docs/Documentation_GPO_MotDePasse_Biovision.pdf" target="_blank">↗ Documentation</a>
+    </div></div>
+  </div>
+
+  <div class="proj reveal">
+    <div class="proj-head" onclick="toggleProj(this)">
+      <div><span class="proj-id">PROJ_04</span><span class="proj-title">Création d'utilisateur AD via PowerShell</span>
+        <div class="proj-tags"><span>PowerShell</span><span>Active Directory</span><span>Windows Server 2022</span></div>
+      </div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="proj-body"><div class="proj-body-inner">
+      <p>Pour automatiser la création de comptes utilisateurs dans le domaine Biovision.com, un script PowerShell utilisant le module ActiveDirectory est mis en place pour créer et placer les utilisateurs dans la bonne OU.</p>
+      <h5>OBJECTIFS</h5>
+      <ol>
+        <li>Importer le module ActiveDirectory dans PowerShell ISE</li>
+        <li>Définir les variables utilisateur (nom, prénom, OU, UPN, mot de passe)</li>
+        <li>Exécuter la commande New-ADUser et vérifier dans l'annuaire AD</li>
+      </ol>
+      <h5>TRAVAIL RÉALISÉ</h5>
+      <ul>
+        <li>Rédaction du script PowerShell avec New-ADUser, placement dans OU=Ventes</li>
+        <li>Vérification de la création de Jack ROBINSON dans la console AD — succès</li>
+      </ul>
+      <h5>COMPÉTENCES</h5>
+      <div class="comp"><span>A1.3.4 — Annuaire AD</span><span>A4.1.6 — Automatisation PS</span><span>A4.1.7 — Comptes utilisateurs</span></div>
+      <a class="doclink" href="docs/Documentation_PowerShell_Biovision.pdf" target="_blank">↗ Documentation</a>
+    </div></div>
+  </div>
+
+  <div class="proj reveal">
+    <div class="proj-head" onclick="toggleProj(this)">
+      <div><span class="proj-id">PROJ_05</span><span class="proj-title">Création du portfolio professionnel</span>
+        <div class="proj-tags"><span>HTML</span><span>CSS</span><span>JavaScript</span><span>GitHub Pages</span></div>
+      </div>
+      <div class="chev">▾</div>
+    </div>
+    <div class="proj-body"><div class="proj-body-inner">
+      <p>Conception et développement d'un portfolio personnel en HTML / CSS / JS pour présenter mon parcours, mes compétences et mes réalisations professionnelles. Design responsive, hébergé sur GitHub Pages et accessible publiquement.</p>
+      <h5>TRAVAIL RÉALISÉ</h5>
+      <ul>
+        <li>Analyse du besoin → conception → développement → mise en ligne</li>
+        <li>Développement HTML/CSS/JS, design responsive adapté à tous les écrans</li>
+        <li>Déploiement sur GitHub Pages</li>
+        <li>Intégration des documentations techniques PDF et de la veille cybersécurité</li>
+      </ul>
+      <h5>COMPÉTENCES</h5>
+      <div class="comp"><span>A5.1.1 — Présence en ligne</span><span>A5.1.2 — Valorisation image pro</span><span>A5.2.1 — Identité professionnelle</span><span>A1.3.1 — Développement web</span></div>
+    </div></div>
+  </div>
+</section>
+
+<section id="veille">
+  <div class="tag">05 — veille technologique</div>
+  <h2 class="reveal">Cybersécurité — menaces & protection</h2>
+  <p class="reveal" style="color:var(--ink-dim);max-width:70ch;margin-bottom:8px;">Ma veille porte sur l'évolution des cyberattaques et les moyens de protection des systèmes informatiques. Elle me permet de rester informé des nouvelles menaces et d'améliorer mes compétences en administration.</p>
+
+  <div class="threat-grid">
+    <div class="threat reveal"><h5>⚡ Ransomware — secteur santé</h5><p>Hôpital Simone-Veil de Cannes frappé par LockBit : 61 Go de données patients publiées. Centre hospitalier de Pontarlier paralysé (oct. 2025). Santé = 3ᵉ secteur le plus visé en France (ANSSI 2025).</p></div>
+    <div class="threat reveal"><h5>🤖 IA dans les cyberattaques</h5><p>Phishing automatisé, malwares générés par IA, plus difficiles à détecter.</p></div>
+    <div class="threat reveal"><h5>📜 Directive NIS2 — obligation EU</h5><p>Renforcement obligatoire de la sécurité pour les infrastructures critiques.</p></div>
+  </div>
+
+  <div class="tool-row reveal">
+    <span>📰 Feedly — agrégateur RSS</span>
+    <span>🔔 Google Alerts</span>
+    <span>🇫🇷 ANSSI</span>
+    <span>💻 ZDNet / The Hacker News</span>
+  </div>
+
+  <div class="src-row reveal">
+    <a href="https://www.anssi.gouv.fr" target="_blank">anssi.fr</a>
+    <a href="https://www.cert.ssi.gouv.fr" target="_blank">cert.ssi.gouv.fr</a>
+    <a href="https://www.zdnet.fr/securite" target="_blank">zdnet.fr/securite</a>
+    <a href="https://thehackernews.com" target="_blank">thehackernews.com</a>
+    <a href="https://www.cybermalveillance.gouv.fr" target="_blank">cybermalveillance.gouv.fr</a>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="tag" style="justify-content:center;">06 — contact</div>
+  <h2>Travaillons ensemble.</h2>
+  <p>Paris, France — CFA INSTA · Disponible pour une alternance à partir de septembre 2026</p>
+  <div class="contact-links">
+    <a class="btn primary" href="images/cv_prasande_peroumal.pdf">↓ Télécharger le CV</a>
+    <a class="btn" href="https://www.linkedin.com/in/prasande-peroumal" target="_blank">↗ LinkedIn</a>
+  </div>
+</section>
+
+<footer>© 2026 — PEROUMAL Prasande — BTS SIO SISR · Systèmes opérationnels</footer>
+</div>
+
+<script>
+// ---- boot sequence ----
+const bootLine = document.getElementById('bootLine');
+const bootMsgs = ['initializing profile','loading skills.json','mounting projects/','connecting → LinkedIn','ready.'];
+let bi = 0;
+const bootInterval = setInterval(()=>{
+  bi++;
+  if(bi < bootMsgs.length){
+    bootLine.innerHTML = bootMsgs[bi] + '<span class="cursor"></span>';
+  }
+}, 380);
+setTimeout(()=>{
+  clearInterval(bootInterval);
+  document.getElementById('boot').classList.add('hide');
+}, 1900);
+
+// ---- typed subtitle ----
+const typedEl = document.getElementById('typed');
+const phrases = ['> Windows Server & Active Directory', '> Sécurisation d\\'infrastructures réseau', '> Recherche alternance — sept. 2026'];
+let pIdx=0, cIdx=0, deleting=false;
+function typeLoop(){
+  const current = phrases[pIdx];
+  if(!deleting){
+    cIdx++;
+    typedEl.textContent = current.slice(0,cIdx);
+    if(cIdx === current.length){ deleting = true; setTimeout(typeLoop, 1400); return; }
+  } else {
+    cIdx--;
+    typedEl.textContent = current.slice(0,cIdx);
+    if(cIdx === 0){ deleting = false; pIdx = (pIdx+1)%phrases.length; }
+  }
+  setTimeout(typeLoop, deleting ? 28 : 45);
+}
+setTimeout(typeLoop, 2000);
+
+// ---- scroll reveal ----
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      if(e.target.id === 'skillbars'){
+        document.querySelectorAll('.skillrow').forEach(row=>{
+          row.querySelector('.fill').style.width = row.dataset.pct + '%';
+        });
+      }
+      io.unobserve(e.target);
+    }
+  });
+}, {threshold:0.2});
+document.querySelectorAll('.reveal, #skillbars').forEach(el=>io.observe(el));
+
+// ---- timeline dots ----
+const tio = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+}, {threshold:0.5});
+document.querySelectorAll('.trow').forEach(el=>tio.observe(el));
+
+// ---- accordion projects ----
+function toggleProj(head){
+  const proj = head.parentElement;
+  const body = proj.querySelector('.proj-body');
+  const isOpen = proj.classList.contains('open');
+  document.querySelectorAll('.proj.open').forEach(p=>{
+    p.classList.remove('open');
+    p.querySelector('.proj-body').style.maxHeight = null;
+  });
+  if(!isOpen){
+    proj.classList.add('open');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  }
+}
+
+// ---- animated network background canvas ----
+const canvas = document.getElementById('netbg');
+const ctx = canvas.getContext('2d');
+let w,h,nodes;
+function resize(){
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight * 1.0;
+  const count = Math.min(70, Math.floor(w/26));
+  nodes = Array.from({length:count}, ()=>({
+    x: Math.random()*w, y: Math.random()*h,
+    vx:(Math.random()-0.5)*0.25, vy:(Math.random()-0.5)*0.25
+  }));
+}
+window.addEventListener('resize', resize);
+resize();
+function frame(){
+  ctx.clearRect(0,0,w,h);
+  for(const n of nodes){
+    n.x += n.vx; n.y += n.vy;
+    if(n.x<0||n.x>w) n.vx*=-1;
+    if(n.y<0||n.y>h) n.vy*=-1;
+  }
+  for(let i=0;i<nodes.length;i++){
+    for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i], b=nodes[j];
+      const d = Math.hypot(a.x-b.x, a.y-b.y);
+      if(d < 130){
+        ctx.strokeStyle = `rgba(61,220,151,${(1-d/130)*0.13})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+      }
+    }
+  }
+  for(const n of nodes){
+    ctx.fillStyle = 'rgba(61,220,151,0.35)';
+    ctx.beginPath(); ctx.arc(n.x,n.y,1.6,0,Math.PI*2); ctx.fill();
+  }
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
